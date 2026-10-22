@@ -7,8 +7,8 @@ import { AppointmentsModule } from './appointment/appointment.module';
 import { PrescriptionsModule } from './prescription/prescriptions.module';
 import { MedicalRecordsModule } from './medical_records/medical-records.module';
 import { PatientsModule } from './patients/patients.module';
-
+import { ConfigModule } from '@nestjs/config';
 @Module({
-  imports: [DatabaseModule, UsersModule, AuthModule, DoctorsModule, AppointmentsModule, PrescriptionsModule, MedicalRecordsModule, PatientsModule],
+  imports: [ConfigModule.forRoot(), DatabaseModule, UsersModule, AuthModule, DoctorsModule, AppointmentsModule, PrescriptionsModule, MedicalRecordsModule, PatientsModule],
 })
 export class AppModule {}
