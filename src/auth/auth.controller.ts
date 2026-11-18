@@ -4,16 +4,28 @@ import { UsersService } from '../users/users.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService, private usersService: UsersService) {}
+  constructor(
+    private authService: AuthService,
+    private usersService: UsersService,
+  ) {}
 
   @Post('register')
-  async register(@Body() body: { username: string; password: string }) {
-    return this.usersService.createUser(body.username, body.password);
+  async register(
+    @Body() body: { username: string; password: string; role?: string },
+  ) {
+    return this.usersService.createUser(
+      body.username,
+      body.password,
+      body.role || 'patient',
+    );
   }
 
   @Post('login')
   async login(@Body() body: { username: string; password: string }) {
-    const user = await this.authService.validateUser(body.username, body.password);
+    const user = await this.authService.validateUser(
+      body.username,
+      body.password,
+    );
     if (!user) return { error: 'Invalid credentials' };
     return this.authService.login(user);
   }
