@@ -1,12 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { RowDataPacket, OkPacket } from 'mysql2';
 
 @Injectable()
-export class AppointmentsService {
+export class AppointmentsService implements OnModuleInit {
   constructor(private db: DatabaseService) {}
 
   private pool = () => this.db.getPool();
+
+  async onModuleInit() {
+    try {
+      await this.pool().execute(
+        'ALTER TABLE appointments ADD COLUMN patient_id INT NULL AFTER appointment_id',
+      );
+    } catch {
+      // Column already exists, safe to ignore
+    }
+  }
 
   async createAppointment(data: {
     patient_id: number;
