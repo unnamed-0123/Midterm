@@ -1,12 +1,29 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { RowDataPacket, OkPacket } from 'mysql2';
 
 @Injectable()
-export class MedicalRecordsService {
+export class MedicalRecordsService implements OnModuleInit {
   constructor(private db: DatabaseService) {}
 
   private pool = () => this.db.getPool();
+
+  async onModuleInit() {
+    try {
+      await this.pool().execute(`
+        CREATE TABLE IF NOT EXISTS medical_records (
+          record_id INT PRIMARY KEY AUTO_INCREMENT,
+          patient_id INT NOT NULL,
+          doctor_id INT NOT NULL,
+          diagnosis VARCHAR(1000) NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `);
+    } catch {
+      // Table already exists
+    }
+  }
 
   async createRecord(data: {
     patient_id: number;
@@ -35,8 +52,7 @@ export class MedicalRecordsService {
         p.patient_id,
         CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
         d.doctor_id,
-        CONCAT(d.first_name, ' ', d.last_name) AS doctor_name,
-        d.specialization
+        CONCAT(d.first_name, ' ', d.last_name) AS doctor_name
        FROM medical_records m
        INNER JOIN patients p ON m.patient_id = p.patient_id
        INNER JOIN doctors d ON m.doctor_id = d.doctor_id
@@ -55,8 +71,7 @@ export class MedicalRecordsService {
         p.patient_id,
         CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
         d.doctor_id,
-        CONCAT(d.first_name, ' ', d.last_name) AS doctor_name,
-        d.specialization
+        CONCAT(d.first_name, ' ', d.last_name) AS doctor_name
        FROM medical_records m
        INNER JOIN patients p ON m.patient_id = p.patient_id
        INNER JOIN doctors d ON m.doctor_id = d.doctor_id

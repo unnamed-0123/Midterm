@@ -1,12 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { RowDataPacket, OkPacket } from 'mysql2';
 
 @Injectable()
-export class PrescriptionsService {
+export class PrescriptionsService implements OnModuleInit {
   constructor(private db: DatabaseService) {}
 
   private pool = () => this.db.getPool();
+
+  async onModuleInit() {
+    try {
+      await this.pool().execute(`
+        CREATE TABLE IF NOT EXISTS prescription (
+          prescription_id INT PRIMARY KEY AUTO_INCREMENT,
+          record_id INT NOT NULL,
+          medication_name VARCHAR(100) NOT NULL,
+          dosage VARCHAR(100) NOT NULL,
+          frequency VARCHAR(100) NOT NULL
+        )
+      `);
+    } catch {
+      // Table already exists
+    }
+  }
 
   async createPrescription(data: {
     record_id: number;
