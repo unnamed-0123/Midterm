@@ -9,17 +9,19 @@ export class AppointmentsService {
   private pool = () => this.db.getPool();
 
   async createAppointment(data: {
+    patient_id: number;
     doctor_id: number;
     appointment_time: string;
   }) {
     const [result] = await this.pool().execute<OkPacket>(
-      'INSERT INTO appointments (doctor_id, appointment_time) VALUES (?, ?)',
-      [data.doctor_id, data.appointment_time],
+      'INSERT INTO appointments (patient_id, doctor_id, appointment_time) VALUES (?, ?, ?)',
+      [data.patient_id, data.doctor_id, data.appointment_time],
     );
 
     return {
       message: 'Appointment successfully created',
       appointment_id: result.insertId,
+      patient_id: data.patient_id,
       doctor_id: data.doctor_id,
       appointment_time: data.appointment_time,
     };
@@ -30,11 +32,15 @@ export class AppointmentsService {
       `SELECT 
         a.appointment_id,
         a.appointment_time,
+        a.patient_id,
+        p.first_name AS patient_first_name,
+        p.last_name AS patient_last_name,
         a.doctor_id,
-        CONCAT(d.first_name, ' ', d.last_name) AS doctor_name,
-        d.specialty,
-        d.email
+        d.first_name AS doctor_first_name,
+        d.last_name AS doctor_last_name,
+        CONCAT(d.first_name, ' ', d.last_name) AS doctor_name
        FROM appointments a
+       LEFT JOIN patients p ON a.patient_id = p.patient_id
        INNER JOIN doctors d ON a.doctor_id = d.doctor_id
        ORDER BY a.appointment_time ASC`,
     );
@@ -46,11 +52,15 @@ export class AppointmentsService {
       `SELECT 
         a.appointment_id,
         a.appointment_time,
+        a.patient_id,
+        p.first_name AS patient_first_name,
+        p.last_name AS patient_last_name,
         a.doctor_id,
-        CONCAT(d.first_name, ' ', d.last_name) AS doctor_name,
-        d.specialty,
-        d.email
+        d.first_name AS doctor_first_name,
+        d.last_name AS doctor_last_name,
+        CONCAT(d.first_name, ' ', d.last_name) AS doctor_name
        FROM appointments a
+       LEFT JOIN patients p ON a.patient_id = p.patient_id
        INNER JOIN doctors d ON a.doctor_id = d.doctor_id
        WHERE a.appointment_id = ?`,
       [id],
@@ -62,6 +72,7 @@ export class AppointmentsService {
   async updateAppointment(
     id: number,
     partial: {
+      patient_id?: number;
       doctor_id?: number;
       appointment_time?: string;
     },
@@ -72,6 +83,10 @@ export class AppointmentsService {
     const fields: string[] = [];
     const values: any[] = [];
 
+    if (partial.patient_id) {
+      fields.push('patient_id = ?');
+      values.push(partial.patient_id);
+    }
     if (partial.doctor_id) {
       fields.push('doctor_id = ?');
       values.push(partial.doctor_id);

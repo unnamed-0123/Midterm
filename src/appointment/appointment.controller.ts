@@ -22,6 +22,7 @@ export class AppointmentsController {
   async create(
     @Body()
     body: {
+      patient_id: number;
       doctor_id: number;
       appointment_time: string;
     },
